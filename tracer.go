@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+type Vector struct {
+	x, y, z float32
+}
+
 func main() {
 	img := renderImage(100, 100)
 
@@ -22,11 +26,18 @@ func main() {
 func renderImage(width, height int) (img *image.RGBA) {
 	img = image.NewRGBA(image.Rect(0, 0, width, height))
 
+	eye := Vector{-5, 0, 0}
+	dir := Vector{1, 0, 0}
+
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			img.Set(x, y, color.RGBA{uint8(x), uint8(y), 0, 255})
+			img.Set(x, y, trace(eye, dir))
 		}
 	}
 
 	return
+}
+
+func trace(eye, dir Vector) color.Color {
+	return color.RGBA{uint8(eye.x), 0, 0, 255}
 }
