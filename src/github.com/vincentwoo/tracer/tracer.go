@@ -6,11 +6,8 @@ import (
 	"image/png"
 	"io"
 	"os"
+	"github.com/vincentwoo/geometry"
 )
-
-type Vector struct {
-	x, y, z float32
-}
 
 func main() {
 	img := renderImage(100, 100)
@@ -23,11 +20,11 @@ func main() {
 	png.Encode(writer, img)
 }
 
-func renderImage(width, height int) (img *image.RGBA) {
-	img = image.NewRGBA(image.Rect(0, 0, width, height))
+func renderImage(width, height int) (*image.RGBA) {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	eye := Vector{-5, 0, 0}
-	dir := Vector{1, 0, 0}
+	eye := geometry.Vector{-5, 0, 0}
+	dir := geometry.Vector{1, 0, 0}
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
@@ -35,9 +32,9 @@ func renderImage(width, height int) (img *image.RGBA) {
 		}
 	}
 
-	return
+	return img
 }
 
-func trace(eye, dir Vector) color.Color {
-	return color.RGBA{uint8(eye.x), 0, 0, 255}
+func trace(eye, dir geometry.Vector) color.Color {
+	return color.RGBA{uint8(eye.X), 0, 0, 255}
 }
