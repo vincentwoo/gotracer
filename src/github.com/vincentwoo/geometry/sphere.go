@@ -1,14 +1,11 @@
 package geometry
 
-import (
-	"image/color"
-	"math"
-)
+import "math"
 
 type Sphere struct {
 	Origin Vector
 	Radius float64
-	Color  color.Color
+	Material
 }
 
 func (sphere Sphere) Intersects(ray Ray) (intersects bool, intersection, normal Vector) {
@@ -20,20 +17,17 @@ func (sphere Sphere) Intersects(ray Ray) (intersects bool, intersection, normal 
 	discriminant := b*b - 4*c
 
 	if discriminant <= 0 {
-		intersects = false
-		return
+		return false, intersection, normal
 	}
 
 	t := (-b - math.Sqrt(discriminant)) / 2
 
 	if t <= 0 {
-		intersects = false
-		return
+		return false, intersection, normal
 	}
 
-	intersects = true
 	intersection = ray.Origin.Add(ray.Direction.Multiply(t))
 	normal = intersection.Subtract(sphere.Origin).Divide(sphere.Radius)
 
-	return
+	return true, intersection, normal
 }

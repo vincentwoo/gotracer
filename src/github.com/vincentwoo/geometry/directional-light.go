@@ -1,9 +1,6 @@
 package geometry
 
-import "image/color"
-
 type DirectionalLight struct {
-	Direction Vector
-	Color     color.Color
-	Strength  float64
+	Direction, Color Vector
+	Strength         float64
 }

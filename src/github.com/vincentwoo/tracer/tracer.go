@@ -2,12 +2,12 @@ package main
 
 import (
 	// "fmt"
+	"github.com/vincentwoo/geometry"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
-	// "math"
-	"github.com/vincentwoo/geometry"
+	"math"
 	"os"
 )
 
@@ -22,8 +22,8 @@ func main() {
 	png.Encode(writer, img)
 }
 
-func renderImage(width, height int) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+func renderImage(width, height int) *image.RGBA64 {
+	img := image.NewRGBA64(image.Rect(0, 0, width, height))
 
 	eye := geometry.Vector{-1, 0, 0}
 	dir := geometry.Vector{1, 0, 0}
@@ -49,15 +49,42 @@ func renderImage(width, height int) *image.RGBA {
 }
 
 func trace(ray geometry.Ray) color.Color {
-
-	geo := geometry.Sphere{geometry.Vector{0, 0, 0}, 0.4, color.RGBA{255, 0, 0, 255}}
-	light := geometry.DirectionalLight{geometry.Vector{-0.5, -1, 0}.Normalize(), color.RGBA{255, 255, 255, 255}, 1}
+	material := geometry.Material{
+		Ambient:  geometry.Vector{29, 33, 38}.Divide(255),
+		Diffuse:  geometry.Vector{34, 60, 150}.Divide(255),
+		Specular: geometry.Vector{1, 1, 1},
+	}
+	geo := geometry.Sphere{
+		Origin:   geometry.Vector{0, 0, 0},
+		Radius:   0.4,
+		Material: material,
+	}
+	light := geometry.DirectionalLight{
+		Direction: geometry.Vector{-1, -1, 0}.Normalize(),
+		Color:     geometry.Vector{1, 1, 1},
+		Strength:  1,
+	}
 
 	if intersects, _, normal := geo.Intersects(ray); intersects {
+		pixelColor := geo.Material.Ambient
+
 		if f := normal.DotProduct(light.Direction); f > 0 {
-			return color.RGBA{uint8(f * 255), 0, 0, 255}
+			pixelColor = pixelColor.Add(
+				light.Color.Multiply(f).MultiplyV(geo.Material.Diffuse))
 		}
-		return color.RGBA{0, 0, 0, 255}
+
+		reflectedV := light.Direction.Subtract(
+			normal.Multiply(2 * light.Direction.DotProduct(normal)))
+
+		reflected := reflectedV.DotProduct(light.Direction.Multiply(-1))
+
+		if reflected > 0 {
+			specular := math.Pow(reflected, 10)
+			pixelColor = pixelColor.Add(
+				light.Color.Multiply(specular).MultiplyV(geo.Material.Specular))
+		}
+
+		return pixelColor.Color()
 	}
-	return color.RGBA{0, 0, 0, 0}
+	return color.Transparent
 }
