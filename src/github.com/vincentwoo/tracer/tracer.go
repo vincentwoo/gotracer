@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"io"
 	"math"
+	"math/rand"
 	"os"
 )
 
@@ -32,16 +33,33 @@ func renderImage(width, height int) *image.RGBA64 {
 	left := geometry.Vector{0, 0, -0.5}
 	right := geometry.Vector{0, 0, 0.5}
 
+	msaa := 8
+
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			xFactor := float64(x) / float64(width)
-			yFactor := float64(y) / float64(height)
+			var pixelColor [4]uint32
+			for i := 0; i < msaa; i++ {
+				for j := 0; j < msaa; j++ {
+					xFactor := (float64(x) + ((rand.Float64() + float64(i)) / float64(msaa))) / float64(width)
+					yFactor := (float64(y) + ((rand.Float64() + float64(j)) / float64(msaa))) / float64(height)
 
-			leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
-			upComponent := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
+					leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
+					upComponent := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
 
-			color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
-			img.Set(x, y, color)
+					color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
+					r, g, b, a := color.RGBA()
+					pixelColor[0] += r
+					pixelColor[1] += g
+					pixelColor[2] += b
+					pixelColor[3] += a
+				}
+			}
+			img.Set(x, y, color.RGBA64{
+				uint16(pixelColor[0] / uint32(msaa * msaa)),
+				uint16(pixelColor[1] / uint32(msaa * msaa)),
+				uint16(pixelColor[2] / uint32(msaa * msaa)),
+				uint16(pixelColor[3] / uint32(msaa * msaa)),
+			})
 		}
 	}
 
