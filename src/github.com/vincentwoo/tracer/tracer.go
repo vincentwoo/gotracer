@@ -16,12 +16,13 @@ import (
 
 var(
 	msaa = 8
+	cpus = 4
 	width = 800
 	height = 800
 )
 
 func main() {
-	runtime.GOMAXPROCS(4)
+	runtime.GOMAXPROCS(cpus)
 	img := renderImage()
 
 	outfile, _ := os.Create("out.png")
@@ -42,15 +43,27 @@ func renderImage() *image.RGBA64 {
 	left := geometry.Vector{0, 0, -0.5}
 	right := geometry.Vector{0, 0, 0.5}
 
+	workQueue := make(chan int, 10)
 	var wg sync.WaitGroup
-	slices := 4
-	sliceWidth := width / 4
 
-	for slice := 0; slice < slices; slice++ {
-		wg.Add(1)
-		go func(x int) {
+	go func() {
+		for x := 0; x < width; x++ {
+			workQueue <- x
+		}
+		close(workQueue)
+	}()
+
+	wg.Add(cpus)
+	for thread := 0; thread < cpus; thread++ {
+		go func() {
 			r := rand.New(rand.NewSource(420))
-			for end := x + sliceWidth; x < end; x++ {
+
+			for {
+				x, ok := <- workQueue
+				if !ok {
+					wg.Done()
+					return
+				}
 				for y := 0; y < height; y++ {
 					var pixelColor [4]uint32
 					for i := 0; i < msaa; i++ {
@@ -77,8 +90,7 @@ func renderImage() *image.RGBA64 {
 					})
 				}
 			}
-			wg.Done()
-		}(slice * sliceWidth)
+		}()
 	}
 
 	wg.Wait()
