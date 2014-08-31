@@ -1,16 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
+	// "math"
 	"os"
 	"github.com/vincentwoo/geometry"
 )
 
 func main() {
-	img := renderImage(100, 100)
+	img := renderImage(10, 10)
 
 	outfile, _ := os.Create("out.png")
 	defer outfile.Close()
@@ -23,12 +25,22 @@ func main() {
 func renderImage(width, height int) (*image.RGBA) {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	eye := geometry.Vector{-5, 0, 0}
-	dir := geometry.Vector{1, 0, 0}
+	eye   := geometry.Vector{-1, 0, 0}
+	dir   := geometry.Vector{1, 0, 0}
+	up    := geometry.Vector{0, 1, 0}
+	down  := geometry.Vector{0, -1, 0}
+	left  := geometry.Vector{-1, 0, 0}
+	right := geometry.Vector{1, 0, 0}
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			img.Set(x, y, trace(eye, dir))
+			xFactor := float64(x) / float64(width)
+			yFactor := float64(y) / float64(height)
+
+			leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
+			upComponent   := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
+
+			img.Set(x, y, trace(eye, dir.Add(leftComponent).Add(upComponent).Normalize() ))
 		}
 	}
 
@@ -36,5 +48,5 @@ func renderImage(width, height int) (*image.RGBA) {
 }
 
 func trace(eye, dir geometry.Vector) color.Color {
-	return color.RGBA{uint8(eye.X), 0, 0, 255}
+	return color.RGBA{0, 0, 0, 255}
 }
