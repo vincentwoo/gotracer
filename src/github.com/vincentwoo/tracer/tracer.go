@@ -59,5 +59,5 @@ func trace(ray geometry.Ray) color.Color {
 		}
 		return color.RGBA{0, 0, 0, 255}
 	}
-	return color.RGBA{150, 150, 150, 255}
+	return color.RGBA{0, 0, 0, 0}
 }
