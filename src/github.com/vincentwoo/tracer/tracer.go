@@ -1,18 +1,18 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
-	// "math"
+	"math"
 	"os"
 	"github.com/vincentwoo/geometry"
 )
 
 func main() {
-	img := renderImage(10, 10)
+	img := renderImage(500, 500)
 
 	outfile, _ := os.Create("out.png")
 	defer outfile.Close()
@@ -27,10 +27,10 @@ func renderImage(width, height int) (*image.RGBA) {
 
 	eye   := geometry.Vector{-1, 0, 0}
 	dir   := geometry.Vector{1, 0, 0}
-	up    := geometry.Vector{0, 1, 0}
-	down  := geometry.Vector{0, -1, 0}
-	left  := geometry.Vector{-1, 0, 0}
-	right := geometry.Vector{1, 0, 0}
+	up    := geometry.Vector{0, 0.5, 0}
+	down  := geometry.Vector{0, -0.5, 0}
+	left  := geometry.Vector{0, 0, -0.5}
+	right := geometry.Vector{0, 0, 0.5}
 
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
@@ -48,5 +48,8 @@ func renderImage(width, height int) (*image.RGBA) {
 }
 
 func trace(eye, dir geometry.Vector) color.Color {
-	return color.RGBA{0, 0, 0, 255}
+	if math.Sqrt(dir.Y * dir.Y + dir.Z * dir.Z) < 0.3 {
+		return color.RGBA{255, 0, 0, 255}
+	}
+	return color.RGBA{0, 255, 0, 255}
 }
