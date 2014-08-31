@@ -6,7 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"io"
-	"math"
+	// "math"
 	"os"
 	"github.com/vincentwoo/geometry"
 )
@@ -40,15 +40,19 @@ func renderImage(width, height int) (*image.RGBA) {
 			leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
 			upComponent   := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
 
-			img.Set(x, y, trace(eye, dir.Add(leftComponent).Add(upComponent).Normalize() ))
+			color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
+			img.Set(x, y, color)
 		}
 	}
 
 	return img
 }
 
-func trace(eye, dir geometry.Vector) color.Color {
-	if math.Sqrt(dir.Y * dir.Y + dir.Z * dir.Z) < 0.3 {
+func trace(ray geometry.Ray) color.Color {
+	var geo geometry.Geometry
+	geo = geometry.Sphere{geometry.Vector{0, 0, 0}, 0.1}
+
+	if geo.Intersects(ray) {
 		return color.RGBA{255, 0, 0, 255}
 	}
 	return color.RGBA{0, 255, 0, 255}

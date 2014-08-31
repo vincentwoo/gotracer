@@ -16,7 +16,7 @@ func (v Vector) String() string {
 }
 
 func (v Vector) Length() float64 {
-	return math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z)
+	return math.Sqrt(v.DotProduct(v))
 }
 
 func (v Vector) Normalize() Vector {
