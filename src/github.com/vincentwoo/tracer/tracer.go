@@ -52,7 +52,7 @@ func trace(ray geometry.Ray) color.Color {
 	var geo geometry.Geometry
 	geo = geometry.Sphere{geometry.Vector{0, 0, 0}, 0.1}
 
-	if geo.Intersects(ray) {
+	if intersects, _, _ := geo.Intersects(ray); intersects {
 		return color.RGBA{255, 0, 0, 255}
 	}
 	return color.RGBA{0, 255, 0, 255}

@@ -7,16 +7,29 @@ type Sphere struct {
   Radius float64
 }
 
-func (sphere Sphere) Intersects(ray Ray) bool {
+func (sphere Sphere) Intersects(ray Ray) (intersects bool, intersection, normal Vector) {
   delta := ray.Origin.Subtract(sphere.Origin)
 
-  // a := 1
   b := 2 * ray.Direction.DotProduct(delta)
   c := delta.DotProduct(delta) - (sphere.Radius * sphere.Radius)
 
-  if c < 0 {
-    return false
+  discriminant := b * b - 4 * c
+
+  if discriminant <= 0 {
+    intersects = false
+    return
   }
 
-  return -b - math.Sqrt(4 * c) > 0
+  t := (-b - math.Sqrt(discriminant)) / 2
+
+  if t <= 0 {
+    intersects = false
+    return
+  }
+
+  intersects = true
+  intersection = ray.Origin.Add(ray.Direction.Multiply(t))
+  normal = intersection.Subtract(sphere.Origin).Divide(sphere.Radius)
+
+  return
 }
