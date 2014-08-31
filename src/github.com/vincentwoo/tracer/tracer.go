@@ -10,10 +10,19 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
+	"sync"
+)
+
+var(
+	msaa = 8
+	width = 800
+	height = 800
 )
 
 func main() {
-	img := renderImage(500, 500)
+	runtime.GOMAXPROCS(4)
+	img := renderImage()
 
 	outfile, _ := os.Create("out.png")
 	defer outfile.Close()
@@ -23,7 +32,7 @@ func main() {
 	png.Encode(writer, img)
 }
 
-func renderImage(width, height int) *image.RGBA64 {
+func renderImage() *image.RGBA64 {
 	img := image.NewRGBA64(image.Rect(0, 0, width, height))
 
 	eye := geometry.Vector{-1, 0, 0}
@@ -33,35 +42,46 @@ func renderImage(width, height int) *image.RGBA64 {
 	left := geometry.Vector{0, 0, -0.5}
 	right := geometry.Vector{0, 0, 0.5}
 
-	msaa := 8
+	var wg sync.WaitGroup
+	slices := 4
+	sliceWidth := width / 4
 
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			var pixelColor [4]uint32
-			for i := 0; i < msaa; i++ {
-				for j := 0; j < msaa; j++ {
-					xFactor := (float64(x) + ((rand.Float64() + float64(i)) / float64(msaa))) / float64(width)
-					yFactor := (float64(y) + ((rand.Float64() + float64(j)) / float64(msaa))) / float64(height)
+	for slice := 0; slice < slices; slice++ {
+		wg.Add(1)
+		go func(x int) {
+			r := rand.New(rand.NewSource(420))
+			for end := x + sliceWidth; x < end; x++ {
+				for y := 0; y < height; y++ {
+					var pixelColor [4]uint32
+					for i := 0; i < msaa; i++ {
+						for j := 0; j < msaa; j++ {
+							xFactor := (float64(x) + ((r.Float64() + float64(i)) / float64(msaa))) / float64(width)
+							yFactor := (float64(y) + ((r.Float64() + float64(j)) / float64(msaa))) / float64(height)
 
-					leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
-					upComponent := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
+							leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
+							upComponent := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
 
-					color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
-					r, g, b, a := color.RGBA()
-					pixelColor[0] += r
-					pixelColor[1] += g
-					pixelColor[2] += b
-					pixelColor[3] += a
+							color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
+							r, g, b, a := color.RGBA()
+							pixelColor[0] += r
+							pixelColor[1] += g
+							pixelColor[2] += b
+							pixelColor[3] += a
+						}
+					}
+					img.Set(x, y, color.RGBA64{
+						uint16(pixelColor[0] / uint32(msaa * msaa)),
+						uint16(pixelColor[1] / uint32(msaa * msaa)),
+						uint16(pixelColor[2] / uint32(msaa * msaa)),
+						uint16(pixelColor[3] / uint32(msaa * msaa)),
+					})
 				}
 			}
-			img.Set(x, y, color.RGBA64{
-				uint16(pixelColor[0] / uint32(msaa * msaa)),
-				uint16(pixelColor[1] / uint32(msaa * msaa)),
-				uint16(pixelColor[2] / uint32(msaa * msaa)),
-				uint16(pixelColor[3] / uint32(msaa * msaa)),
-			})
-		}
+			wg.Done()
+		}(slice * sliceWidth)
 	}
+
+	wg.Wait()
 
 	return img
 }
