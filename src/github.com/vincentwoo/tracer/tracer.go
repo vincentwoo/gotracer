@@ -74,8 +74,7 @@ func renderImage() *image.RGBA64 {
 							leftComponent := left.Multiply(xFactor).Add(right.Multiply(1 - xFactor))
 							upComponent := up.Multiply(yFactor).Add(down.Multiply(1 - yFactor))
 
-							color := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()})
-							r, g, b, a := color.RGBA()
+							r, g, b, a := trace(geometry.Ray{eye, dir.Add(leftComponent).Add(upComponent).Normalize()}).RGBA()
 							pixelColor[0] += r
 							pixelColor[1] += g
 							pixelColor[2] += b
@@ -94,7 +93,6 @@ func renderImage() *image.RGBA64 {
 	}
 
 	wg.Wait()
-
 	return img
 }
 
